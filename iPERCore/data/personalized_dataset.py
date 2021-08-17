@@ -1,6 +1,6 @@
 # Copyright (c) 2020-2021 impersonator.org authors (Wen Liu and Zhixin Piao). All rights reserved.
 
-import torch
+import paddle
 import os.path
 import numpy as np
 
@@ -183,9 +183,9 @@ class PersonalizedDataset(VideoDataset):
         }
 
         sample = self._transform(sample)
-        sample["masks"] = torch.tensor(masks).float()
-        sample["bg"] = torch.tensor(pseudo_bgs).float()
-        sample["offsets"] = torch.from_numpy(offsets.astype(np.float32, copy=False))
-        sample["links_ids"] = torch.tensor(links_ids).long()
+        sample["masks"] = np.asarray(masks).astype(np.float32)
+        sample["bg"] = pseudo_bgs.astype(np.float32)
+        sample["offsets"] = offsets.astype(np.float32)
+        sample["links_ids"] = links_ids.astype(np.int64)
 
         return sample

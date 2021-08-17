@@ -1,6 +1,6 @@
 # Copyright (c) 2020-2021 impersonator.org authors (Wen Liu and Zhixin Piao). All rights reserved.
 
-from torch.utils.data import DataLoader
+from paddle.io import DataLoader
 
 from .dataset import DatasetFactory
 

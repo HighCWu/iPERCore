@@ -1,57 +1,57 @@
 # Copyright (c) 2020-2021 impersonator.org authors (Wen Liu and Zhixin Piao). All rights reserved.
 
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from torchvision import models
+import paddle
+import paddle.nn as nn
+import paddle.nn.functional as F
+from paddle.vision import models
 from typing import Union
 
 
-class VGG19(nn.Module):
+class VGG19(nn.Layer):
     """
     Sequential(
-          (0): Conv2d(3, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+          (0): Conv2D(3, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
 
-          (1): ReLU(inplace)
-          (2): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
-          (3): ReLU(inplace)
-          (4): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
-          (5): Conv2d(64, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+          (1): ReLU()
+          (2): Conv2D(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+          (3): ReLU()
+          (4): MaxPool2D(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
+          (5): Conv2D(64, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
 
-          (6): ReLU(inplace)
-          (7): Conv2d(128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
-          (8): ReLU(inplace)
-          (9): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
-          (10): Conv2d(128, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+          (6): ReLU()
+          (7): Conv2D(128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+          (8): ReLU()
+          (9): MaxPool2D(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
+          (10): Conv2D(128, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
 
-          (11): ReLU(inplace)
-          (12): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
-          (13): ReLU(inplace)
-          (14): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
-          (15): ReLU(inplace)
-          (16): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
-          (17): ReLU(inplace)
-          (18): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
-          (19): Conv2d(256, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+          (11): ReLU()
+          (12): Conv2D(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+          (13): ReLU()
+          (14): Conv2D(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+          (15): ReLU()
+          (16): Conv2D(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+          (17): ReLU()
+          (18): MaxPool2D(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
+          (19): Conv2D(256, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
 
-          (20): ReLU(inplace)
-          (21): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
-          (22): ReLU(inplace)
-          (23): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
-          (24): ReLU(inplace)
-          (25): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
-          (26): ReLU(inplace)
-          (27): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
-          (28): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+          (20): ReLU()
+          (21): Conv2D(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+          (22): ReLU()
+          (23): Conv2D(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+          (24): ReLU()
+          (25): Conv2D(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+          (26): ReLU()
+          (27): MaxPool2D(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
+          (28): Conv2D(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
 
-          (29): ReLU(inplace)
-          xxxx(30): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
-          xxxx(31): ReLU(inplace)
-          xxxx(32): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
-          xxxx(33): ReLU(inplace)
-          xxxx(34): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
-          xxxx(35): ReLU(inplace)
-          xxxx(36): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
+          (29): ReLU()
+          xxxx(30): Conv2D(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+          xxxx(31): ReLU()
+          xxxx(32): Conv2D(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+          xxxx(33): ReLU()
+          xxxx(34): Conv2D(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+          xxxx(35): ReLU()
+          xxxx(36): MaxPool2D(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
     )
     """
 
@@ -61,7 +61,7 @@ class VGG19(nn.Module):
 
         if ckpt_path:
             vgg = models.vgg19(pretrained=False)
-            ckpt = torch.load(ckpt_path, map_location="cpu")
+            ckpt = paddle.load(ckpt_path)
             vgg.load_state_dict(ckpt, strict=False)
             vgg_pretrained_features = vgg.features
         else:
@@ -74,25 +74,25 @@ class VGG19(nn.Module):
         else:
             slice_ids = [2, 7, 12, 21, 30]
 
-        self.slice1 = torch.nn.Sequential()
-        self.slice2 = torch.nn.Sequential()
-        self.slice3 = torch.nn.Sequential()
-        self.slice4 = torch.nn.Sequential()
-        self.slice5 = torch.nn.Sequential()
+        self.slice1 = paddle.nn.Sequential()
+        self.slice2 = paddle.nn.Sequential()
+        self.slice3 = paddle.nn.Sequential()
+        self.slice4 = paddle.nn.Sequential()
+        self.slice5 = paddle.nn.Sequential()
         for x in range(slice_ids[0]):
-            self.slice1.add_module(str(x), vgg_pretrained_features[x])
+            self.slice1.add_sublayer(str(x), vgg_pretrained_features[x])
         for x in range(slice_ids[0], slice_ids[1]):
-            self.slice2.add_module(str(x), vgg_pretrained_features[x])
+            self.slice2.add_sublayer(str(x), vgg_pretrained_features[x])
         for x in range(slice_ids[1], slice_ids[2]):
-            self.slice3.add_module(str(x), vgg_pretrained_features[x])
+            self.slice3.add_sublayer(str(x), vgg_pretrained_features[x])
         for x in range(slice_ids[2], slice_ids[3]):
-            self.slice4.add_module(str(x), vgg_pretrained_features[x])
+            self.slice4.add_sublayer(str(x), vgg_pretrained_features[x])
         for x in range(slice_ids[3], slice_ids[4]):
-            self.slice5.add_module(str(x), vgg_pretrained_features[x])
+            self.slice5.add_sublayer(str(x), vgg_pretrained_features[x])
 
         if not requires_grad:
             for param in self.parameters():
-                param.requires_grad = False
+                param.stop_gradient = True
 
     def forward(self, X):
         h_out1 = self.slice1(X)
@@ -104,45 +104,45 @@ class VGG19(nn.Module):
         return out
 
 
-class VGG16(nn.Module):
+class VGG16(nn.Layer):
     """
         Sequential(
-          (0): Conv2d(3, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+          (0): Conv2D(3, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
 
-          (1): ReLU(inplace=True)
-          (2): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
-          (3): ReLU(inplace=True)
-          (4): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
-          (5): Conv2d(64, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+          (1): ReLU()
+          (2): Conv2D(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+          (3): ReLU()
+          (4): MaxPool2D(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
+          (5): Conv2D(64, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
 
-          (6): ReLU(inplace=True)
-          (7): Conv2d(128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
-          (8): ReLU(inplace=True)
-          (9): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
-          (10): Conv2d(128, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+          (6): ReLU()
+          (7): Conv2D(128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+          (8): ReLU()
+          (9): MaxPool2D(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
+          (10): Conv2D(128, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
 
-          (11): ReLU(inplace=True)
-          (12): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
-          (13): ReLU(inplace=True)
-          (14): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
-          (15): ReLU(inplace=True)
-          (16): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
-          (17): Conv2d(256, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+          (11): ReLU()
+          (12): Conv2D(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+          (13): ReLU()
+          (14): Conv2D(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+          (15): ReLU()
+          (16): MaxPool2D(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
+          (17): Conv2D(256, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
 
-          (18): ReLU(inplace=True)
-          (19): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
-          (20): ReLU(inplace=True)
-          (21): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
-          (22): ReLU(inplace=True)
-          (23): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
-          (24): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+          (18): ReLU()
+          (19): Conv2D(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+          (20): ReLU()
+          (21): Conv2D(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+          (22): ReLU()
+          (23): MaxPool2D(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
+          (24): Conv2D(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
 
-          (25): ReLU(inplace=True)
-          xxxx(26): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
-          xxxx(27): ReLU(inplace=True)
-          xxxx(28): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
-          xxxx(29): ReLU(inplace=True)
-          xxxx(30): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
+          (25): ReLU()
+          xxxx(26): Conv2D(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+          xxxx(27): ReLU()
+          xxxx(28): Conv2D(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+          xxxx(29): ReLU()
+          xxxx(30): MaxPool2D(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
         )
     """
 
@@ -156,25 +156,25 @@ class VGG16(nn.Module):
         else:
             slice_ids = [2, 7, 12, 19, 26]
 
-        self.slice1 = torch.nn.Sequential()
-        self.slice2 = torch.nn.Sequential()
-        self.slice3 = torch.nn.Sequential()
-        self.slice4 = torch.nn.Sequential()
-        self.slice5 = torch.nn.Sequential()
+        self.slice1 = paddle.nn.Sequential()
+        self.slice2 = paddle.nn.Sequential()
+        self.slice3 = paddle.nn.Sequential()
+        self.slice4 = paddle.nn.Sequential()
+        self.slice5 = paddle.nn.Sequential()
         for x in range(slice_ids[0]):
-            self.slice1.add_module(str(x), vgg_pretrained_features[x])
+            self.slice1.add_sublayer(str(x), vgg_pretrained_features[x])
         for x in range(slice_ids[0], slice_ids[1]):
-            self.slice2.add_module(str(x), vgg_pretrained_features[x])
+            self.slice2.add_sublayer(str(x), vgg_pretrained_features[x])
         for x in range(slice_ids[1], slice_ids[2]):
-            self.slice3.add_module(str(x), vgg_pretrained_features[x])
+            self.slice3.add_sublayer(str(x), vgg_pretrained_features[x])
         for x in range(slice_ids[2], slice_ids[3]):
-            self.slice4.add_module(str(x), vgg_pretrained_features[x])
+            self.slice4.add_sublayer(str(x), vgg_pretrained_features[x])
         for x in range(slice_ids[3], slice_ids[4]):
-            self.slice5.add_module(str(x), vgg_pretrained_features[x])
+            self.slice5.add_sublayer(str(x), vgg_pretrained_features[x])
 
         if not requires_grad:
             for param in self.parameters():
-                param.requires_grad = False
+                param.stop_gradient = True
 
     def forward(self, X):
         h_out1 = self.slice1(X)
@@ -186,35 +186,35 @@ class VGG16(nn.Module):
         return out
 
 
-class VGG11(nn.Module):
+class VGG11(nn.Layer):
     """
     Sequential(
-      (0): Conv2d(3, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+      (0): Conv2D(3, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
 
-      (1): ReLU(inplace=True)
-      (2): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
-      (3): Conv2d(64, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+      (1): ReLU()
+      (2): MaxPool2D(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
+      (3): Conv2D(64, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
 
-      (4): ReLU(inplace=True)
-      (5): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
-      (6): Conv2d(128, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+      (4): ReLU()
+      (5): MaxPool2D(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
+      (6): Conv2D(128, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
 
-      (7): ReLU(inplace=True)
-      (8): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
-      (9): ReLU(inplace=True)
-      (10): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
-      (11): Conv2d(256, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+      (7): ReLU()
+      (8): Conv2D(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+      (9): ReLU()
+      (10): MaxPool2D(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
+      (11): Conv2D(256, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
 
-      (12): ReLU(inplace=True)
-      (13): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
-      (14): ReLU(inplace=True)
-      (15): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
-      (16): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+      (12): ReLU()
+      (13): Conv2D(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+      (14): ReLU()
+      (15): MaxPool2D(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
+      (16): Conv2D(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
 
-      (17): ReLU(inplace=True)
-      (18): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
-      ###(19): ReLU(inplace=True)
-      ###(20): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
+      (17): ReLU()
+      (18): Conv2D(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+      ###(19): ReLU()
+      ###(20): MaxPool2D(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
     )
 
     """
@@ -228,25 +228,25 @@ class VGG11(nn.Module):
         else:
             slice_ids = [2, 5, 8, 13, 18]
 
-        self.slice1 = torch.nn.Sequential()
-        self.slice2 = torch.nn.Sequential()
-        self.slice3 = torch.nn.Sequential()
-        self.slice4 = torch.nn.Sequential()
-        self.slice5 = torch.nn.Sequential()
+        self.slice1 = paddle.nn.Sequential()
+        self.slice2 = paddle.nn.Sequential()
+        self.slice3 = paddle.nn.Sequential()
+        self.slice4 = paddle.nn.Sequential()
+        self.slice5 = paddle.nn.Sequential()
         for x in range(slice_ids[0]):
-            self.slice1.add_module(str(x), vgg_pretrained_features[x])
+            self.slice1.add_sublayer(str(x), vgg_pretrained_features[x])
         for x in range(slice_ids[0], slice_ids[1]):
-            self.slice2.add_module(str(x), vgg_pretrained_features[x])
+            self.slice2.add_sublayer(str(x), vgg_pretrained_features[x])
         for x in range(slice_ids[1], slice_ids[2]):
-            self.slice3.add_module(str(x), vgg_pretrained_features[x])
+            self.slice3.add_sublayer(str(x), vgg_pretrained_features[x])
         for x in range(slice_ids[2], slice_ids[3]):
-            self.slice4.add_module(str(x), vgg_pretrained_features[x])
+            self.slice4.add_sublayer(str(x), vgg_pretrained_features[x])
         for x in range(slice_ids[3], slice_ids[4]):
-            self.slice5.add_module(str(x), vgg_pretrained_features[x])
+            self.slice5.add_sublayer(str(x), vgg_pretrained_features[x])
 
         if not requires_grad:
             for param in self.parameters():
-                param.requires_grad = False
+                param.stop_gradient = True
 
     def forward(self, X):
         h_out1 = self.slice1(X)
@@ -258,7 +258,7 @@ class VGG11(nn.Module):
         return out
 
 
-class VGGLoss(nn.Module):
+class VGGLoss(nn.Layer):
     def __init__(self, 
                  before_relu=False, slice_ids=(0, 1, 2, 3, 4), vgg_type="VGG19", 
                  ckpt_path=False, resize=False):

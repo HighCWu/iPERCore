@@ -2,8 +2,8 @@
 
 import cv2
 import numpy as np
-import torch
-import torchvision.transforms.functional as TF
+import paddle
+import paddle.vision.transforms.functional as TF
 
 
 class ImageTransformer(object):
@@ -50,24 +50,35 @@ class ImageNormalizeToTensor(object):
     """
 
     def __call__(self, image):
-        # image = F.to_tensor(image)
-        image = TF.to_tensor(image)
-        image.mul_(2.0)
-        image.sub_(1.0)
-        return image
+        if not (TF._is_pil_image(image) or TF._is_numpy_image(image)):
+            raise TypeError(
+                'pic should be PIL Image or ndarray with dim=[2 or 3]. Got {}'.
+                format(type(image)))
+        if TF._is_pil_image(image):
+            image = np.asarray(image)
+        if image.ndim == 2:
+            image = image[...,None]
+        if image.dtype == np.uint8:
+            image = image / 255.0
+        h, w, c = image.shape
+        if h > c and w > c:
+            image = np.transpose(image, (2,0,1))
+        image = image * 2 - 1
+
+        return image.astype(np.float32)
 
 
 class ToTensor(object):
     """
-    Convert ndarrays in sample to Tensors.
+    Convert ndarrays in sample to Tensors. 
     """
 
     def __call__(self, sample):
-        sample["images"] = torch.tensor(sample["images"]).float()
-        sample["smpls"] = torch.tensor(sample["smpls"]).float()
+        sample["images"] = np.asarray(sample["images"]).astype(np.float32)
+        sample["smpls"] = np.asarray(sample["smpls"]).astype(np.float32)
 
         if "masks" in sample:
-            sample["masks"] = torch.tensor(sample["masks"]).float()
+            sample["masks"] = np.asarray(sample["masks"]).astype(np.float32)
 
         return sample
 

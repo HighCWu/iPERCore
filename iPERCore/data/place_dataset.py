@@ -1,8 +1,8 @@
 # Copyright (c) 2020-2021 impersonator.org authors (Wen Liu and Zhixin Piao). All rights reserved.
 
 import os.path
-import torchvision.datasets as datasets
-import torchvision.transforms as transforms
+import paddle.vision.datasets as datasets
+import paddle.vision.transforms as transforms
 
 
 from .dataset import DatasetBase
@@ -34,7 +34,6 @@ class Place2Dataset(DatasetBase):
 
     def _create_transform(self):
         image_size = self._opt.image_size
-        transforms.ToTensor()
         transform_list = [
             transforms.RandomResizedCrop(image_size, scale=(0.75, 1.1)),
             transforms.RandomHorizontalFlip(),

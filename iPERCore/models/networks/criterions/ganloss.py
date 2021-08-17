@@ -1,10 +1,10 @@
 # Copyright (c) 2020-2021 impersonator.org authors (Wen Liu and Zhixin Piao). All rights reserved.
 
-import torch
-import torch.nn as nn
+import paddle
+import paddle.nn as nn
 
 
-class LSGANLoss(nn.Module):
+class LSGANLoss(nn.Layer):
     def __init__(self):
         super(LSGANLoss, self).__init__()
 
@@ -15,7 +15,7 @@ class LSGANLoss(nn.Module):
         loss = 0.0
         num = len(x)
         for out in x:
-            loss += torch.mean((out - y) ** 2)
+            loss += paddle.mean((out - y) ** 2)
 
         loss /= num
         return loss

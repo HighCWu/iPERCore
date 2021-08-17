@@ -1,8 +1,8 @@
 # Copyright (c) 2020-2021 impersonator.org authors (Wen Liu and Zhixin Piao). All rights reserved.
 
 import os
-import torch
-import torch.nn.functional as F
+import paddle
+import paddle.nn.functional as F
 import numpy as np
 from tqdm import tqdm
 
@@ -47,11 +47,11 @@ class TemporalFIFO(object):
                 self.temporal_enc[n_down of encoder] = [(bs, cn, hn, wn), ...],the length is self.time_step
         Args:
             smpl_info (dict): the dict of smpl information.
-                --fim (torch.tensor):     (bs, h, w)
-                --wim (torch.tensor):     (bs, h, w, 3)
-                --f2pts (torch.tensor):   (bs, 13776, 3, 3)
+                --fim (paddle.tensor):     (bs, h, w)
+                --wim (paddle.tensor):     (bs, h, w, 3)
+                --f2pts (paddle.tensor):   (bs, 13776, 3, 3)
 
-            tsf_enc_outs (list of torch.tensor):
+            tsf_enc_outs (list of paddle.tensor):
         Returns:
             None
         """
@@ -80,22 +80,22 @@ class TemporalFIFO(object):
     def temporal_enc_outs_to_tensor(self):
         fused_enc_outs = []
         for temp_enc_x in self.temporal_enc:
-            # temp_enc_x (list of torch.tensor): [(bs, c1, h1, w1), (bs, c1, h1, w1), ..., (bs, c1, h1, w1)]
+            # temp_enc_x (list of paddle.tensor): [(bs, c1, h1, w1), (bs, c1, h1, w1), ..., (bs, c1, h1, w1)]
             if self.is_full:
                 # print(self.index, len(temp_enc_x[0:self.index]))
-                fused_enc_outs.append(torch.cat(temp_enc_x, dim=0))  # (bs * nt, c1, h1, w1)
+                fused_enc_outs.append(paddle.concat(temp_enc_x, axis=0))  # (bs * nt, c1, h1, w1)
             else:
                 # print(self.index, len(temp_enc_x[0:self.index]))
-                fused_enc_outs.append(torch.cat(temp_enc_x[0:self.index], dim=0))  # (bs * nt, c1, h1, w1)
+                fused_enc_outs.append(paddle.concat(temp_enc_x[0:self.index], axis=0))  # (bs * nt, c1, h1, w1)
 
         fused_res_outs = []
         for temp_res_x in self.temporal_res:
-            # temp_enc_x (list of torch.tensor): [(bs, c1, h1, w1), (bs, c1, h1, w1), ..., (bs, c1, h1, w1)]
+            # temp_enc_x (list of paddle.tensor): [(bs, c1, h1, w1), (bs, c1, h1, w1), ..., (bs, c1, h1, w1)]
 
             if self.is_full:
-                fused_res_outs.append(torch.cat(temp_res_x, dim=0))  # (bs * nt, c1, h1, w1)
+                fused_res_outs.append(paddle.concat(temp_res_x, axis=0))  # (bs * nt, c1, h1, w1)
             else:
-                fused_res_outs.append(torch.cat(temp_res_x[0:self.index], dim=0))  # (bs * nt, c1, h1, w1)
+                fused_res_outs.append(paddle.concat(temp_res_x[0:self.index], axis=0))  # (bs * nt, c1, h1, w1)
 
         return fused_enc_outs, fused_res_outs
 
@@ -104,17 +104,17 @@ class TemporalFIFO(object):
         for key, values in self.temporal_info.items():
             # print(key, len(values))
             if self.is_full:
-                smpl_info[key] = torch.cat(values, dim=0)
+                smpl_info[key] = paddle.concat(values, axis=0)
             else:
-                smpl_info[key] = torch.cat(values[0:self.index], dim=0)
+                smpl_info[key] = paddle.concat(values[0:self.index], axis=0)
 
         return smpl_info
 
     def temporal_preds_tensor(self):
         if self.is_full:
-            preds = torch.cat(self.temporal_preds, dim=0)
+            preds = paddle.concat(self.temporal_preds, axis=0)
         else:
-            preds = torch.cat(self.temporal_preds[0:self.index], dim=0)
+            preds = paddle.concat(self.temporal_preds[0:self.index], axis=0)
 
         return preds
 
@@ -128,10 +128,9 @@ class TemporalFIFO(object):
 
 
 class Imitator(BaseRunnerModel):
-    def __init__(self, opt, device=torch.device("cuda:0")):
+    def __init__(self, opt):
         super(Imitator, self).__init__(opt)
         self._name = "Imitator"
-        self.device = device
 
         self.src_info = None
         self.tsf_info = None
@@ -141,19 +140,17 @@ class Imitator(BaseRunnerModel):
 
     def _create_networks(self):
         # 1. body mesh recovery model
-        # self.body_rec = SMPL(self._opt.smpl_model).to(self.device)
-        self.body_rec = SMPLH(model_path=self._opt.smpl_model_hand).to(self.device)
+        # self.body_rec = SMPL(self._opt.smpl_model)
+        self.body_rec = SMPLH(model_path=self._opt.smpl_model_hand)
 
         self.weak_cam_swapper = cam_pose_utils.WeakPerspectiveCamera(self.body_rec)
 
         # 2. flow composition module
-        self.flow_comp = FlowComposition(opt=self._opt).to(self.device)
+        self.flow_comp = FlowComposition(opt=self._opt)
 
         # 3.0 create generator
         self.generator, self.temporal_fifo = self._create_generator(
             self._opt.neural_render_cfg.Generator)
-
-        self.generator = self.generator.to(self.device)
 
     def _create_generator(self, cfg):
         gen_name = self._opt.gen_name
@@ -164,7 +161,7 @@ class Imitator(BaseRunnerModel):
         else:
             load_path = self._opt.load_path_G
 
-        ckpt = torch.load(load_path, map_location="cpu")
+        ckpt = paddle.load(load_path)
         net.load_state_dict(ckpt, strict=False)
         net.eval()
 
@@ -174,15 +171,15 @@ class Imitator(BaseRunnerModel):
 
         return net, temporal_fifo
 
-    @torch.no_grad()
+    @paddle.no_grad()
     def source_setup(self, src_path, src_smpl, masks=None, bg_img=None, offsets=0, links_ids=None, visualizer=None):
         """
             pre-process the source information
         Args:
             src_path (list of str): the source image paths, len(src_path) = ns
-            src_smpl (torch.tensor or np.ndarray)): (ns, 85)
+            src_smpl (paddle.tensor or np.ndarray)): (ns, 85)
             masks (list of np.ndarray): [(1, h, w), (1, h, w), ..., (1, h, w)] or (ns, 1, h, w)
-            bg_img (torch.tensor): (3, h, w)
+            bg_img (paddle.tensor): (3, h, w)
             offsets (np.ndarray or 0): (ns, nv, 3) or (nv, 3)
             links_ids (np.ndarray or None): (nv,)
             visualizer (Visualizer or None):
@@ -192,21 +189,19 @@ class Imitator(BaseRunnerModel):
 
         """
         # 1. load source images (1, ns, 3, H, W)
-        src_img = torch.tensor(cv_utils.load_images(src_path, self._opt.image_size)[None]).float().to(self.device)
+        src_img = paddle.to_tensor(cv_utils.load_images(src_path, self._opt.image_size)[None]).astype(paddle.float32)
 
         # 2. process source inputs for (bg_net and src_net)
         if isinstance(src_smpl, np.ndarray):
-            src_smpl = torch.tensor(src_smpl).float().to(self.device)
-        elif src_smpl.device != self.device:
-            src_smpl = src_smpl.to(self.device)
+            src_smpl = paddle.to_tensor(src_smpl).astype(paddle.float32)
 
         # 2.1 the source smpl information
-        offsets = torch.tensor(offsets).float().to(self.device)
+        offsets = paddle.to_tensor(offsets).astype(paddle.float32)
         src_info = self.body_rec.get_details(src_smpl, offsets, links_ids=links_ids)
         src_info["num_source"] = src_smpl.shape[0]
 
         if masks is not None:
-            src_info["masks"] = 1.0 - torch.tensor(masks).float().to(self.device)
+            src_info["masks"] = 1.0 - paddle.to_tensor(masks).astype(paddle.float32)
         self.flow_comp.add_rendered_f2verts_fim_wim(src_info, use_morph=True, get_uv_info=True)
 
         src_info["offsets"] = offsets
@@ -218,21 +213,20 @@ class Imitator(BaseRunnerModel):
 
         # 3. background inpaintor
         if self._opt.use_inpaintor or bg_img is not None:
-            bg_img = torch.tensor(bg_img).float()
+            bg_img = paddle.to_tensor(bg_img).astype(paddle.float32)
             bg_img.unsqueeze_(0)
             bg_img.unsqueeze_(0)
-            bg_img = bg_img.to(self.device)
         else:
             bg_img = self.generator.forward_bg(input_G_bg)  # (N, ns, 3, h, w)
             # replace visible parts
             # bg_img = input_G_bg[:, :, 0:3] + (1 - input_G_bg[:, :, -1:]) * bg_img
 
         # 3. process source inputs
-        # src_enc_outs: [torch.tensor(bs*ns, c1, h1, w1), tensor.tensor(bs*ns, c2, h2, w2), ... ]
+        # src_enc_outs: [paddle.tensor(bs*ns, c1, h1, w1), tensor.tensor(bs*ns, c2, h2, w2), ... ]
         src_enc_outs, src_res_outs = self.generator.forward_src(input_G_src, only_enc=True)
 
         src_info["img"] = src_img
-        src_info["bg"] = bg_img[:, 0].contiguous()
+        src_info["bg"] = bg_img[:, 0]
         src_info["feats"] = (src_enc_outs, src_res_outs)
 
         self.src_info = src_info
@@ -251,44 +245,44 @@ class Imitator(BaseRunnerModel):
 
         cam = self.weak_cam_swapper.cam_swap(src_cam, tgt_cam, self.first_cam, cam_strategy)
 
-        ref_smpl = torch.cat([cam, pose, src_shape], dim=1)
+        ref_smpl = paddle.concat([cam, pose, src_shape], axis=1)
 
         return ref_smpl
 
-    @torch.no_grad()
+    @paddle.no_grad()
     def make_inputs_for_tsf(self, src_info, tgt_smpl, cam_strategy="smooth", t=0,
                             primary_ids=0, use_selected_f2pts=False):
         """
             process the inputs for tsf_net
         Args:
             src_info     (dict): the source setup information, it contains the followings:
-                --cam       (torch.Tensor):         (ns, 3);
-                --shape     (torch.Tensor):         (ns, 10);
-                --pose      (torch.Tensor):         (ns, 72);
-                --fim       (torch.Tensor):         (1 * ns, h, w),
-                --wim       (torch.Tensor):         (1 * ns, h, w, 3),
-                --f2pts     (torch.Tensor):         (1 * ns, 13776, 3, 2)
-                --selected_f2pts (torch.Tensor):    (1 * ns, 13776, 3, 2)
-                --only_vis_f2pts (torch.Tensor):    (1 * ns, 13776, 3, 2)
+                --cam       (paddle.Tensor):         (ns, 3);
+                --shape     (paddle.Tensor):         (ns, 10);
+                --pose      (paddle.Tensor):         (ns, 72);
+                --fim       (paddle.Tensor):         (1 * ns, h, w),
+                --wim       (paddle.Tensor):         (1 * ns, h, w, 3),
+                --f2pts     (paddle.Tensor):         (1 * ns, 13776, 3, 2)
+                --selected_f2pts (paddle.Tensor):    (1 * ns, 13776, 3, 2)
+                --only_vis_f2pts (paddle.Tensor):    (1 * ns, 13776, 3, 2)
                 --feats     (Tuple[List]): ([(ns, c1, h1, w2), ..., (ns, ck, hk, wk)],
                                             [(ns, ck, hk, wk), ..., (ns, ck, hk, wk)])
 
-                --offsets   (torch.Tensor or 0):    (num_verts, 3) or 0;
-                --links_ids (torch.Tensor or None): (num_verts, 3) or None;
-                --uv_img    (torch.Tensor):         (1, 3, h, w);
-                --bg        (torch.Tensor):         (1, 3, h, w);
+                --offsets   (paddle.Tensor or 0):    (num_verts, 3) or 0;
+                --links_ids (paddle.Tensor or None): (num_verts, 3) or None;
+                --uv_img    (paddle.Tensor):         (1, 3, h, w);
+                --bg        (paddle.Tensor):         (1, 3, h, w);
 
-            tgt_smpl     (torch.Tensor) :  (nt, 85)
+            tgt_smpl     (paddle.Tensor) :  (nt, 85)
             cam_strategy (str): "smooth"
             t            (int):
             primary_ids  (int):
             use_selected_f2pts (bool):
 
         Returns:
-            input_G_tsf   (torch.Tensor):
-            Tst           (torch.Tensor):
-            Ttt           (torch.Tensor or None):
-            temp_enc_outs (list of torch.Tensor):
+            input_G_tsf   (paddle.Tensor):
+            Tst           (paddle.Tensor):
+            Ttt           (paddle.Tensor or None):
+            temp_enc_outs (list of paddle.Tensor):
             ref_info      (dict):
         """
         bs = 1
@@ -324,7 +318,7 @@ class Imitator(BaseRunnerModel):
 
         return input_G_tsf, Tst, Ttt, temp_enc_outs, temp_res_outs, ref_info
 
-    @torch.no_grad()
+    @paddle.no_grad()
     def inference(self, tgt_smpls, cam_strategy="smooth", output_dir="", prefix="pred_",
                   use_selected_f2pts=False, visualizer=None, verbose=True):
 
@@ -334,7 +328,7 @@ class Imitator(BaseRunnerModel):
 
         self.first_cam = None
 
-        tgt_smpls = torch.tensor(tgt_smpls).float().to(self.device)
+        tgt_smpls = paddle.to_tensor(tgt_smpls).astype(paddle.float32)
         if cam_strategy == "smooth":
             tgt_smpls = self.weak_cam_swapper.stabilize(tgt_smpls)
 
@@ -348,13 +342,13 @@ class Imitator(BaseRunnerModel):
 
             if t != 0 and self._opt.temporal:
                 prev_preds = self.temporal_fifo.temporal_preds_tensor()
-                preds_warp = F.grid_sample(prev_preds, Ttt.view(-1, self._opt.image_size, self._opt.image_size, 2))
+                preds_warp = F.grid_sample(prev_preds, Ttt.reshape((-1, self._opt.image_size, self._opt.image_size, 2)))
             else:
                 preds_warp = None
 
             if visualizer is not None:
-                src_warp = F.grid_sample(self.src_info["img"].view(-1, 3, self._opt.image_size, self._opt.image_size),
-                                         Tst.view(-1, self._opt.image_size, self._opt.image_size, 2))
+                src_warp = F.grid_sample(self.src_info["img"].reshape((-1, 3, self._opt.image_size, self._opt.image_size)),
+                                         Tst.reshape((-1, self._opt.image_size, self._opt.image_size, 2)))
                 visualizer.vis_named_img("pred_" + cam_strategy, preds)
                 visualizer.vis_named_img("uv_warp", input_G_tsf[0, :, 0:3])
                 visualizer.vis_named_img("src_warp", src_warp)
@@ -367,15 +361,15 @@ class Imitator(BaseRunnerModel):
 
             if output_dir:
                 filename = "{:0>8}.png".format(t)
-                preds = preds[0].cpu().numpy()
+                preds = preds[0].numpy()
                 file_path = os.path.join(output_dir, prefix + filename)
                 cv_utils.save_cv2_img(preds, file_path, normalize=True)
 
                 outputs.append(file_path)
             else:
-                preds = preds[0].cpu().numpy()
+                preds = preds[0].numpy()
                 outputs.append(preds)
-                # tsf_mask = tsf_mask[0, 0].cpu().numpy() * 255
+                # tsf_mask = tsf_mask[0, 0].numpy() * 255
                 # tsf_mask = tsf_mask.astype(np.uint8)
                 # cv_utils.save_cv2_img(tsf_mask, os.path.join(output_dir, "mask_" + filename), normalize=False)
 
@@ -395,18 +389,18 @@ class Imitator(BaseRunnerModel):
         return pred_imgs, tsf_mask
 
     def post_update(self, ref_info, preds):
-        cur_inputs = torch.cat([preds, ref_info["cond"]], dim=1).unsqueeze_(dim=1)
+        cur_inputs = paddle.concat([preds, ref_info["cond"]], axis=1).unsqueeze_(axis=1)
         tsf_enc_outs, tsf_res_outs = self.generator.forward_src(cur_inputs, only_enc=True)
 
         self.temporal_fifo.append_info(ref_info, preds, tsf_enc_outs, tsf_res_outs)
 
 
 class Viewer(Imitator):
-    def __init__(self, opt, device=torch.device("cuda:0")):
-        super(Viewer, self).__init__(opt, device)
+    def __init__(self, opt):
+        super(Viewer, self).__init__(opt)
         self._name = "Viewer"
 
-    @torch.no_grad()
+    @paddle.no_grad()
     def inference(self, tgt_smpls, cam_strategy="smooth",
                   output_dir="", visualizer=None, verbose=True):
 
@@ -417,7 +411,7 @@ class Viewer(Imitator):
 
         self.first_cam = None
 
-        tgt_smpls = torch.tensor(tgt_smpls).float().to(self.device)
+        tgt_smpls = paddle.to_tensor(tgt_smpls).astype(paddle.float32)
         if cam_strategy == "smooth":
             tgt_smpls = self.weak_cam_swapper.stabilize(tgt_smpls)
 
@@ -431,13 +425,13 @@ class Viewer(Imitator):
 
             if t != 0 and self._opt.temporal:
                 prev_preds = self.temporal_fifo.temporal_preds_tensor()
-                preds_warp = F.grid_sample(prev_preds, Ttt.view(-1, self._opt.image_size, self._opt.image_size, 2))
+                preds_warp = F.grid_sample(prev_preds, Ttt.reshape((-1, self._opt.image_size, self._opt.image_size, 2)))
             else:
                 preds_warp = None
 
             if visualizer is not None:
-                src_warp = F.grid_sample(self.src_info["img"].view(-1, 3, self._opt.image_size, self._opt.image_size),
-                                         Tst.view(-1, self._opt.image_size, self._opt.image_size, 2))
+                src_warp = F.grid_sample(self.src_info["img"].reshape((-1, 3, self._opt.image_size, self._opt.image_size)),
+                                         Tst.reshape((-1, self._opt.image_size, self._opt.image_size, 2)))
                 visualizer.vis_named_img("pred_" + cam_strategy, preds)
                 visualizer.vis_named_img("uv_warp", input_G_tsf[0, :, 0:3])
                 visualizer.vis_named_img("src_warp", src_warp)
@@ -450,15 +444,15 @@ class Viewer(Imitator):
 
             if output_dir:
                 filename = "{:0>8}.png".format(t)
-                preds = preds[0].cpu().numpy()
+                preds = preds[0].numpy()
                 file_path = os.path.join(output_dir, "pred_" + filename)
                 cv_utils.save_cv2_img(preds, file_path, normalize=True)
 
                 outputs.append(file_path)
             else:
-                preds = preds[0].cpu().numpy()
+                preds = preds[0].numpy()
                 outputs.append(preds)
-                # tsf_mask = tsf_mask[0, 0].cpu().numpy() * 255
+                # tsf_mask = tsf_mask[0, 0].numpy() * 255
                 # tsf_mask = tsf_mask.astype(np.uint8)
                 # cv_utils.save_cv2_img(tsf_mask, os.path.join(output_dir, "mask_" + filename), normalize=False)
 
@@ -466,25 +460,23 @@ class Viewer(Imitator):
 
 
 class Swapper(Imitator):
-    def __init__(self, opt, device=torch.device("cuda:0")):
-        super(Swapper, self).__init__(opt, device)
+    def __init__(self, opt):
+        super(Swapper, self).__init__(opt)
         self._name = "Swapper"
 
     def _create_networks(self):
         # 1. body mesh recovery model
-        # self.body_rec = SMPL(self._opt.smpl_model).to(self.device)
-        self.body_rec = SMPLH(model_path=self._opt.smpl_model_hand).to(self.device)
+        # self.body_rec = SMPL(self._opt.smpl_model)
+        self.body_rec = SMPLH(model_path=self._opt.smpl_model_hand)
 
         self.weak_cam_swapper = cam_pose_utils.WeakPerspectiveCamera(self.body_rec)
 
         # 2. flow composition module
-        self.flow_comp = FlowCompositionForSwapper(opt=self._opt).to(self.device)
+        self.flow_comp = FlowCompositionForSwapper(opt=self._opt)
 
         # 3.0 create generator
         self.generator, self.temporal_fifo = self._create_generator(
             self._opt.neural_render_cfg.Generator)
-
-        self.generator = self.generator.to(self.device)
 
     def get_selected_info_by_part_mask(self, swap_masks):
         """
@@ -552,9 +544,9 @@ class Swapper(Imitator):
             pre-process the source information
         Args:
             src_path_list  (List[List[str]]): the source image paths, len(src_path_list) = the number of people;
-            src_smpl_list  (List[Union[torch.tensor,np.ndarray]]): [(ns_1, 85), ..., (ns_p, 85)];
+            src_smpl_list  (List[Union[paddle.tensor,np.ndarray]]): [(ns_1, 85), ..., (ns_p, 85)];
             masks_list     (List[Union[np.ndarray, None]]): [(ns_1, 1, h, w), ..., None, ..., (ns_p, 1, h, w)]
-            bg_img_list    (List[Union[torch.Tensor, None]]): (3, h, w)
+            bg_img_list    (List[Union[paddle.Tensor, None]]): (3, h, w)
             offsets_list   (List[np.ndarray]): [(num_verts, 3), ..., (num_verts, 3)] or 0;
             links_ids_list (List[Union[np.ndarray, None]]): [(num_verts, 3), ..., None, ..., (num_verts, 3)];
             swap_parts     (List[List[str]]):

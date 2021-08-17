@@ -1,7 +1,7 @@
 # Copyright (c) 2020-2021 impersonator.org authors (Wen Liu and Zhixin Piao). All rights reserved.
 
-from torch.utils.data import Dataset
-import torchvision.transforms as transforms
+from paddle.io import Dataset
+import paddle.vision.transforms as transforms
 
 from .transforms import ToTensor, ImageTransformer
 
@@ -20,12 +20,12 @@ class DatasetFactory(object):
             is_for_train:
 
         Returns:
-            dataset (torch.utils.data.Dataset): it must implements the function of self.__getitem(item), and it
+            dataset (paddle.io.Dataset): it must implements the function of self.__getitem(item), and it
                 will return a sample dictionary which contains the following information:
-                --images (torch.Tensor): (ns + nt, 3, h, w), here `ns` and `nt` are the number of source and targets;
-                --masks (torch.Tensor): (ns + nt, 1, h, w);
-                --smpls (torch.Tensor): (ns + nt, 85);
-                --bg (torch.Tensor): (3, h, w).
+                --images (paddle.Tensor): (ns + nt, 3, h, w), here `ns` and `nt` are the number of source and targets;
+                --masks (paddle.Tensor): (ns + nt, 1, h, w);
+                --smpls (paddle.Tensor): (ns + nt, 85);
+                --bg (paddle.Tensor): (3, h, w).
         """
 
         if dataset_name == "ProcessedVideo":
@@ -91,9 +91,9 @@ class VideoDataset(DatasetBase):
 
         Returns:
             sample (dict): the data sample, it contains the following informations:
-                --images (torch.Tensor): (ns + nt, 3, h, w), here `ns` and `nt` are the number of source and targets;
-                --masks (torch.Tensor): (ns + nt, 1, h, w);
-                --smpls (torch.Tensor): (ns + nt, 85);
+                --images (paddle.Tensor): (ns + nt, 3, h, w), here `ns` and `nt` are the number of source and targets;
+                --masks (paddle.Tensor): (ns + nt, 1, h, w);
+                --smpls (paddle.Tensor): (ns + nt, 85);
 
         """
         pass

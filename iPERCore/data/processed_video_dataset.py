@@ -91,9 +91,9 @@ class ProcessedVideoDataset(VideoDataset):
 
         Returns:
             sample (dict): the data sample, it contains the following informations:
-                --images (torch.Tensor): (ns + nt, 3, h, w), here `ns` and `nt` are the number of source and targets;
-                --masks (torch.Tensor): (ns + nt, 1, h, w);
-                --smpls (torch.Tensor): (ns + nt, 85);
+                --images (paddle.Tensor): (ns + nt, 3, h, w), here `ns` and `nt` are the number of source and targets;
+                --masks (paddle.Tensor): (ns + nt, 1, h, w);
+                --smpls (paddle.Tensor): (ns + nt, 85);
 
         """
 

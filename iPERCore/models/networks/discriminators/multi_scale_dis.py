@@ -1,18 +1,18 @@
 # Copyright (c) 2020-2021 impersonator.org authors (Wen Liu and Zhixin Piao). All rights reserved.
 
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
+import paddle
+import paddle.nn as nn
+import paddle.nn.functional as F
 from .patch_dis import PatchDiscriminator
 
 
 def reduce_tensor(outs):
-    with torch.no_grad():
+    with paddle.no_grad():
         avg = 0.0
         num = len(outs)
 
         for out in outs:
-            avg += torch.mean(out)
+            avg += paddle.mean(out)
 
         avg /= num
         return avg
@@ -21,12 +21,12 @@ def reduce_tensor(outs):
 def crop_img(imgs, rects, fact=2):
     """
     Args:
-        imgs (torch.Tensor): (N, C, H, W);
-        rects (torch.Tensor): (N, 4=(x0, y0, x1, y1));
+        imgs (paddle.Tensor): (N, C, H, W);
+        rects (paddle.Tensor): (N, 4=(x0, y0, x1, y1));
         fact (float): the crop and size factor.
 
     Returns:
-        crops (torch.Tensor):
+        crops (paddle.Tensor):
 
     """
     bs, _, ori_h, ori_w = imgs.shape
@@ -39,12 +39,12 @@ def crop_img(imgs, rects, fact=2):
             crops.append(_crop)
 
     if len(crops) != 0:
-        crops = torch.cat(crops, dim=0)
+        crops = paddle.concat(crops, axis=0)
 
     return crops
 
 
-class GlobalDiscriminator(nn.Module):
+class GlobalDiscriminator(nn.Layer):
 
     def __init__(self, cfg, use_aug_bg=False):
         """
@@ -84,10 +84,10 @@ class GlobalDiscriminator(nn.Module):
 
         Args:
             inputs (dict): the inputs information, and it contains the followings,
-                --x (torch.Tensor): (N, C, H, W);
-                --bg_x (torch.Tensor): (N, C, H, W).
+                --x (paddle.Tensor): (N, C, H, W);
+                --bg_x (paddle.Tensor): (N, C, H, W).
         Returns:
-            outs (list of torch.Tensor):
+            outs (list of paddle.Tensor):
         """
 
         x = inputs["x"]
@@ -107,7 +107,7 @@ class GlobalDiscriminator(nn.Module):
             return outs
 
 
-class GlobalLocalDiscriminator(nn.Module):
+class GlobalLocalDiscriminator(nn.Layer):
     def __init__(self, cfg, use_aug_bg=False):
         """
 
@@ -154,13 +154,13 @@ class GlobalLocalDiscriminator(nn.Module):
 
         Args:
             inputs (dict): the inputs informations, and it contains the followings,
-                --x (torch.Tensor): (N, C, H, W);
-                --bg_x (torch.Tensor): (N, C, H, W);
-                --body_rects (torch.Tensor): (N, 4 = (x0, x1, y0, y1));
+                --x (paddle.Tensor): (N, C, H, W);
+                --bg_x (paddle.Tensor): (N, C, H, W);
+                --body_rects (paddle.Tensor): (N, 4 = (x0, x1, y0, y1));
                 --get_avg (bool): get the avg tensor or not.
 
         Returns:
-            outs (list of torch.Tensor):
+            outs (list of paddle.Tensor):
         """
 
         x = inputs["x"]
@@ -191,7 +191,7 @@ class GlobalLocalDiscriminator(nn.Module):
             return outs
 
 
-class GlobalBodyHeadDiscriminator(nn.Module):
+class GlobalBodyHeadDiscriminator(nn.Layer):
     def __init__(self, cfg, use_aug_bg=False):
         """
 
@@ -239,10 +239,10 @@ class GlobalBodyHeadDiscriminator(nn.Module):
 
         Args:
             inputs (dict): the inputs informations, and it contains the followings,
-                --x (torch.Tensor): (N, C, H, W);
-                --bg_x (torch.Tensor): (N, C, H, W);
-                --body_rects (torch.LongTensor): (N, 4 = (x0, x1, y0, y1));
-                --head_rects (torch.LongTensor): (N, 4 = (x0, x1, y0, y1));
+                --x (paddle.Tensor): (N, C, H, W);
+                --bg_x (paddle.Tensor): (N, C, H, W);
+                --body_rects (paddle.LongTensor): (N, 4 = (x0, x1, y0, y1));
+                --head_rects (paddle.LongTensor): (N, 4 = (x0, x1, y0, y1));
                 --get_avg (bool):
 
         Returns:
@@ -284,13 +284,13 @@ class GlobalBodyHeadDiscriminator(nn.Module):
             return outs
 
 
-class MultiScaleDiscriminator(nn.Module):
+class MultiScaleDiscriminator(nn.Layer):
 
     def __init__(self, global_nc, input_nc, ndf=32, n_layers=3, max_nf_mult=8, norm_type="batch", use_sigmoid=False):
         super(MultiScaleDiscriminator, self).__init__()
 
         # low-res to high-res
-        scale_models = nn.ModuleList()
+        scale_models = nn.LayerList()
         # scale_n_layers = [1, 1, 1, 1, 1]
         n_scales = 2
         for i in range(n_scales):

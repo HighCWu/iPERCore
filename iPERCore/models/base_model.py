@@ -1,7 +1,7 @@
 # Copyright (c) 2020-2021 impersonator.org authors (Wen Liu and Zhixin Piao). All rights reserved.
 
 import os
-import torch
+import paddle
 from collections import OrderedDict
 
 
@@ -64,7 +64,7 @@ class BaseModel(object):
             # model.load_state_dict(state_dict)
             model.load_state_dict(state_dict, strict=False)
 
-        save_data = torch.load(load_path, map_location="cpu")
+        save_data = paddle.load(load_path)
         if need_module:
             # network.load_state_dict(save_data)
             network.load_state_dict(save_data, strict=False)
